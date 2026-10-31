@@ -10,10 +10,10 @@ app.use(express.json());
 let latestQrData = null;
 let isClientReady = false;
 
-// Cloud Config: Configured for Render Linux Environments with automatic cache target mappings
+// Configured with a stable local web cache mapping to bypass the GitHub layout crash completely
 const client = new Client({
     authStrategy: new LocalAuth({
-        dataPath: '/opt/render/project/src/.wwebjs_auth' // Persistent path for Render filesystem
+        dataPath: '/opt/render/project/src/.wwebjs_auth' 
     }),
     puppeteer: {
         headless: true,
@@ -24,10 +24,9 @@ const client = new Client({
             '--disable-gpu'
         ]
     },
+    // Force the client to look locally within your project folder instead of hitting a broken URL
     webVersionCache: {
-        type: 'remote',
-        remotePath: 'https://githubusercontent.com{version}.html',
-        strict: false
+        type: 'local'
     }
 });
 
@@ -91,7 +90,6 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-// Base API status route
 app.get('/', (req, res) => {
     res.json({ ready: isClientReady, mode: "Render Cloud Deployment" });
 });
