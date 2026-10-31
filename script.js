@@ -10,14 +10,13 @@ app.use(express.json());
 let latestQrData = null;
 let isClientReady = false;
 
-// Cloud Config: Configured for Render Linux Environments
+// Cloud Config: Configured for Render Linux Environments with automatic cache target mappings
 const client = new Client({
     authStrategy: new LocalAuth({
-        dataPath: '/opt/render/project/src/.wwebjs_auth' // Persistent path for Render
+        dataPath: '/opt/render/project/src/.wwebjs_auth' // Persistent path for Render filesystem
     }),
     puppeteer: {
         headless: true,
-        executablePath: '/usr/bin/google-chrome', // Render's native Chrome installation location
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -34,14 +33,14 @@ const client = new Client({
 
 // WhatsApp State Handling
 client.on('qr', (qr) => {
-    console.log('New QR Code generated. Visit the /qr endpoint to scan.');
+    console.log('New QR Code generated. Visit your /qr endpoint in a browser to scan.');
     latestQrData = qr;
 });
 
 client.on('ready', () => {
     console.log('🚀 WhatsApp Engine linked and active!');
     isClientReady = true;
-    latestQrData = null; // Clear QR data since we are logged in
+    latestQrData = null;
 });
 
 client.on('disconnected', () => {
@@ -52,20 +51,19 @@ client.on('disconnected', () => {
 // SERVICE 1: CONNECTING (Displays the QR Code in your Web Browser)
 app.get('/qr', async (req, res) => {
     if (isClientReady) {
-        return res.send('<h1>Status: Connected!</h1><p>Your WhatsApp account is already active.</p>');
+        return res.send('<h1>Status: Connected!</h1><p>Your WhatsApp account is active.</p>');
     }
     if (!latestQrData) {
-        return res.send('<h1>Initializing...</h1><p>Please refresh this page in a few seconds while the QR code builds.</p>');
+        return res.send('<h1>Initializing...</h1><p>Please refresh this page in a few seconds while the engine mounts.</p>');
     }
 
     try {
-        // Convert the raw string array into a clean scannable browser image
         const qrImagePage = await QRCode.toDataURL(latestQrData);
         res.send(`
             <div style="text-align: center; margin-top: 50px; font-family: Arial, sans-serif;">
                 <h2>Scan this QR Code with WhatsApp:</h2>
                 <img src="${qrImagePage}" style="border: 1px solid #ccc; padding: 10px; border-radius: 5px;"/>
-                <p style="color: #666; margin-top: 15px;">Refresh the page if the connection times out.</p>
+                <p style="color: #666; margin-top: 15px;">Refresh the page if your registration times out.</p>
             </div>
         `);
     } catch (err) {
@@ -93,7 +91,7 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-// Catch-all health checker route
+// Base API status route
 app.get('/', (req, res) => {
     res.json({ ready: isClientReady, mode: "Render Cloud Deployment" });
 });
